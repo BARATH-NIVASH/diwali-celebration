@@ -134,11 +134,11 @@
 
         <div class="diwali-frame-inner flex items-center justify-center">
           <!-- Active Playing Video -->
-          <video id="reel-video" src="diwali-reel.mp4" loop playsinline controls></video>
+          <video id="reel-video" loop playsinline controls></video>
 
-          <!-- Upload Prompt / Placeholder when video not yet chosen (clean without text) -->
-          <label id="video-upload-prompt" class="cursor-pointer flex flex-col items-center justify-center p-6 text-center text-amber-200 hover:text-amber-100 transition-transform hover:scale-105">
-            <input type="file" id="video-input" accept="video/*" class="hidden">
+          <!-- Upload Prompt / Placeholder when video not yet chosen (clean without text, strictly disabled until Screen 5) -->
+          <label id="video-upload-prompt" class="cursor-pointer flex flex-col items-center justify-center p-6 text-center text-amber-200 hover:text-amber-100 transition-transform hover:scale-105 pointer-events-none">
+            <input type="file" id="video-input" accept="video/*" class="hidden" disabled>
             <span class="text-5xl animate-bounce">🎬</span>
           </label>
         </div>
@@ -2178,9 +2178,22 @@
       if (screenNumber === 5) {
         gsap.to(finaleContainer, { opacity: 1, duration: 1.2, pointerEvents: 'auto' });
         if (frameBox) frameBox.classList.add('frame-visible');
+        
+        // Strictly enable upload interactions only inside Screen 5
+        const promptLabel = document.getElementById('video-upload-prompt');
+        const vInput = document.getElementById('video-input');
+        if (promptLabel) promptLabel.classList.remove('pointer-events-none');
+        if (vInput) vInput.removeAttribute('disabled');
       } else {
         gsap.to(finaleContainer, { opacity: 0, duration: 0.2, pointerEvents: 'none' });
         if (frameBox) frameBox.classList.remove('frame-visible');
+        
+        // Keep upload input completely disabled across Screens 1 through 4
+        const promptLabel = document.getElementById('video-upload-prompt');
+        const vInput = document.getElementById('video-input');
+        if (promptLabel) promptLabel.classList.add('pointer-events-none');
+        if (vInput) vInput.setAttribute('disabled', 'true');
+
         const reelVideo = document.getElementById('reel-video');
         if (reelVideo) reelVideo.pause();
       }
@@ -2233,8 +2246,11 @@
 
       // Direct interaction: Click or tap ANYWHERE on the screen triggers floor ripples & advances screens
       window.addEventListener('pointerdown', (e) => {
-        // Prevent screen advancement if interacting with video frame, file upload, or video controls
-        if (e.target.closest('#festive-frame-container') || e.target.closest('video') || e.target.closest('label')) return;
+        // Prevent screen advancement ONLY if interacting strictly with the video element or the Screen 5 upload button
+        if (STATE.currentScreen === 5 && (e.target.closest('#festive-frame-container') || e.target.closest('video') || e.target.closest('#video-upload-prompt'))) {
+          return;
+        }
+
         app.spawnFloorTouchRipple(e.clientX, e.clientY);
         advanceScreen();
       });
