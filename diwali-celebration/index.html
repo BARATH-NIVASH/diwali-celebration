@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ஒளி பிறக்கட்டும் - Diwali 3D Celebration</title>
-  <!-- Google Fonts -->
+  <title>ஒளி பிறக்கட்டும் - Let the Light Be Born | Diwali 3D</title>
+  <!-- Google Fonts: Noto Serif Tamil, Noto Sans Tamil & Cinzel Decorative -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+Tamil:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+Tamil:wght@400;600;700;800&family=Noto+Sans+Tamil:wght@300;400;600&display=swap" rel="stylesheet">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Three.js and Postprocessing CDN -->
+  <!-- Three.js and Postprocessing CDN imports -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -35,7 +35,7 @@
       height: 100%;
       overflow: hidden;
       background: #040208;
-      font-family: 'Noto Serif Tamil', serif;
+      font-family: 'Noto Serif Tamil', 'Noto Sans Tamil', serif;
       color: #fce7b0;
     }
     canvas#webgl-canvas {
@@ -53,6 +53,19 @@
     }
     .pulse-glow {
       animation: pulseGlow 2.6s ease-in-out infinite;
+    }
+    .shimmer-gold {
+      color: #facc15;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+    }
+    #flash-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      background: transparent;
+      opacity: 0;
+      display: none;
     }
     #festive-frame-container {
       display: flex;
@@ -86,7 +99,7 @@
       background: #06040a;
       box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
     }
-    #reel-player {
+    #reel-video {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -111,32 +124,37 @@
   <div id="finale-greeting-container" class="absolute inset-0 z-30 flex items-center justify-center p-4 pointer-events-none opacity-0 transition-opacity duration-1000">
     <div id="festive-frame-container" class="pointer-events-auto flex items-center justify-center m-auto">
       <div class="diwali-ornate-frame">
+        <!-- Decorative corner diya accents -->
         <div class="absolute -top-3.5 -left-3.5 text-xl select-none filter drop-shadow">🪔</div>
         <div class="absolute -top-3.5 -right-3.5 text-xl select-none filter drop-shadow">🪔</div>
         <div class="absolute -bottom-3.5 -left-3.5 text-xl select-none filter drop-shadow">🪔</div>
         <div class="absolute -bottom-3.5 -right-3.5 text-xl select-none filter drop-shadow">🪔</div>
 
         <div class="diwali-frame-inner flex items-center justify-center">
-          <video id="reel-player" class="w-full h-full object-cover" playsinline loop controls autoplay muted>
-            <source src="Happy-Diwali-SnapYT.App(1).mp4" type="video/mp4">
-            <source src="diwali-reel.mp4" type="video/mp4">
-          </video>
+          <!-- Active Directly Loaded Video (diwali-reel.mp4) -->
+          <video id="reel-video" src="diwali-reel.mp4" loop playsinline controls preload="auto"></video>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    /**
+     * "ஒளி பிறக்கட்டும்" (Let the Light Be Born)
+     * Upgraded Multi-Screen 3D Diwali Celebration Engine
+     */
+
     const STATE = {
       started: false,
       currentScreen: 1,
       totalScreens: 5,
       isTransitioning: false,
-      pixelRatio: Math.min(window.devicePixelRatio, 2),
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
       width: window.innerWidth,
       height: window.innerHeight
     };
 
+    // --- Synthesized Audio Engine (Web Audio API) ---
     class DiwaliAudioEngine {
       constructor() {
         this.ctx = null;
@@ -148,6 +166,7 @@
       init() {
         if (this.initialized) return;
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
         this.ctx = new AudioCtx();
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
@@ -161,7 +180,7 @@
         const ragaNotes = [293.66, 329.63, 369.99, 440.00, 493.88, 587.33, 659.25, 739.99];
         let step = 0;
         const melodyLoop = () => {
-          if (!this.ctx) return;
+          if (!this.ctx || STATE.currentScreen === 5) return;
           const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -229,7 +248,7 @@
       playCrackerPop(intensity = 1.0) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        const bufferSize = this.ctx.sampleRate * 0.045;
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.045);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -298,6 +317,14 @@
         noiseGain.gain.setValueAtTime(0.85, now);
         noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
 
+        const ringOsc = this.ctx.createOscillator();
+        const ringGain = this.ctx.createGain();
+        ringOsc.type = 'sine';
+        ringOsc.frequency.setValueAtTime(3100, now + 0.04);
+        ringGain.gain.setValueAtTime(0.001, now);
+        ringGain.gain.linearRampToValueAtTime(0.05, now + 0.1);
+        ringGain.gain.exponentialRampToValueAtTime(0.00001, now + 2.1);
+
         osc.connect(oscGain);
         oscGain.connect(this.masterGain);
 
@@ -305,9 +332,14 @@
         filter.connect(noiseGain);
         noiseGain.connect(this.masterGain);
 
+        ringOsc.connect(ringGain);
+        ringGain.connect(this.masterGain);
+
         osc.start(now);
         noise.start(now);
+        ringOsc.start(now + 0.04);
         osc.stop(now + 2.6);
+        ringOsc.stop(now + 2.2);
       }
 
       playFountainHiss(dur = 3.0) {
@@ -375,6 +407,32 @@
         gain.connect(this.masterGain);
         osc.start(now);
         osc.stop(now + 0.95);
+
+        setTimeout(() => {
+          this.playSkyPeonyBurst();
+        }, 820);
+      }
+
+      playSkyPeonyBurst() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.8);
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(now);
+        osc.stop(now + 1.2);
+
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => {
+            this.playCrackerPop(0.3);
+          }, 60 + i * 50 + Math.random() * 30);
+        }
       }
 
       playNadaswaramFlourish() {
@@ -382,4 +440,1574 @@
         const notes = [
           { f: 587.33, d: 0.3 },
           { f: 659.25, d: 0.25 },
-          { f: 73
+          { f: 739.99, d: 0.38 },
+          { f: 880.00, d: 0.45 },
+          { f: 1174.66, d: 1.1 }
+        ];
+        let delay = 0;
+        notes.forEach(note => {
+          setTimeout(() => {
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(note.f, now);
+            gain.gain.setValueAtTime(0.045, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + note.d);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(now);
+            osc.stop(now + note.d);
+          }, delay);
+          delay += (note.d * 1000) * 0.78;
+        });
+      }
+    }
+
+    const audio = new DiwaliAudioEngine();
+
+    // --- Procedural Canvas Textures ---
+    const CanvasTextures = {
+      createGraniteNormal() {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const imgData = ctx.createImageData(size, size);
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const idx = (y * size + x) * 4;
+            const isBorder = (x % 128 < 3) || (y % 128 < 3);
+            const noise = (Math.random() - 0.5) * 16;
+            let nx = 128 + noise;
+            let ny = 128 + noise;
+            let nz = 255;
+            if (isBorder) { nx = 75; ny = 75; nz = 190; }
+            imgData.data[idx] = nx;
+            imgData.data[idx + 1] = ny;
+            imgData.data[idx + 2] = nz;
+            imgData.data[idx + 3] = 255;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(8, 8);
+        return tex;
+      },
+
+      createGraniteRoughness() {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#161616';
+        ctx.fillRect(0, 0, size, size);
+        for (let i = 0; i < 24; i++) {
+          const grad = ctx.createRadialGradient(
+            Math.random() * size, Math.random() * size, 8,
+            Math.random() * size, Math.random() * size, 65
+          );
+          grad.addColorStop(0, '#050505');
+          grad.addColorStop(1, '#262626');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(Math.random() * size, Math.random() * size, 60, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(8, 8);
+        return tex;
+      },
+
+      createSparkleTexture() {
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.2, 'rgba(255, 220, 140, 0.95)');
+        grad.addColorStop(0.5, 'rgba(255, 110, 20, 0.45)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+        return new THREE.CanvasTexture(canvas);
+      },
+
+      createSmokeTexture() {
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(64, 64, 6, 64, 64, 62);
+        grad.addColorStop(0, 'rgba(220, 215, 210, 0.6)');
+        grad.addColorStop(0.5, 'rgba(160, 150, 145, 0.25)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+        return new THREE.CanvasTexture(canvas);
+      },
+
+      createMarigoldTexture() {
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        for (let r = 26; r > 2; r -= 4) {
+          ctx.fillStyle = r > 16 ? '#ff6d00' : (r > 8 ? '#ffb300' : '#fff59d');
+          ctx.beginPath();
+          ctx.arc(32, 32, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        return new THREE.CanvasTexture(canvas);
+      },
+
+      createPhotoRangoliTexture() {
+        const size = 2048;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const cx = size / 2;
+        const cy = size / 2;
+
+        ctx.clearRect(0, 0, size, size);
+
+        function addSandNoise(amount = 0.15) {
+          const imgData = ctx.getImageData(0, 0, size, size);
+          const data = imgData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 5) {
+              const noise = (Math.random() - 0.5) * 255 * amount;
+              data[i] = Math.min(255, Math.max(0, data[i] + noise));
+              data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+              data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+              if (data[i+3] < 250) {
+                 data[i+3] = Math.max(0, data[i+3] - Math.random() * 40);
+              }
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        }
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+
+        const numPetals = 8;
+
+        for (let i = 0; i < numPetals; i++) {
+          const angle = (i / numPetals) * Math.PI * 2;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+
+          const fanLines = 32;
+          for (let f = 0; f < fanLines; f++) {
+            const spread = (f / (fanLines - 1) - 0.5) * 0.65;
+            const startR = 460;
+            const endR = 760 - Math.pow(Math.abs(spread) * 1.8, 2) * 100;
+
+            ctx.beginPath();
+            ctx.strokeStyle = f % 2 === 0 ? '#ffcc00' : '#ffaa00';
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.moveTo(Math.sin(spread) * startR, Math.cos(spread) * startR);
+            ctx.lineTo(Math.sin(spread) * endR, Math.cos(spread) * endR);
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(0, 0, 755, -0.3 + Math.PI / 2, 0.3 + Math.PI / 2);
+          ctx.strokeStyle = '#ff8800';
+          ctx.lineWidth = 22;
+          ctx.stroke();
+
+          const eyeY = 600;
+          ctx.shadowBlur = 4;
+
+          ctx.beginPath();
+          ctx.arc(0, eyeY, 72, 0, Math.PI * 2);
+          ctx.fillStyle = '#059669';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(0, eyeY, 54, 0, Math.PI * 2);
+          ctx.fillStyle = '#2563eb';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(0, eyeY, 36, 0, Math.PI * 2);
+          ctx.fillStyle = '#facc15';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(0, eyeY, 20, 0, Math.PI * 2);
+          ctx.fillStyle = '#dc2626';
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        const outerPearlCount = 120;
+        for (let i = 0; i < outerPearlCount; i++) {
+          const a = (i / outerPearlCount) * Math.PI * 2;
+          if (Math.abs(Math.cos(a * 4)) > 0.92) continue;
+
+          const dotX = cx + Math.cos(a) * 785;
+          const dotY = cy + Math.sin(a) * 785;
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, 10, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        }
+
+        const pinkCount = 64;
+        for (let p = 0; p < pinkCount; p++) {
+          const theta = (p / pinkCount) * Math.PI * 2;
+          const px = Math.cos(theta) * 440;
+          const py = Math.sin(theta) * 440;
+
+          ctx.save();
+          ctx.translate(cx + px, cy + py);
+          ctx.rotate(theta + Math.PI / 3.5);
+
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 40, 18, 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = '#e11d48';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.ellipse(-4, -2, 32, 12, 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = '#fb7185';
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 395, 0, Math.PI * 2);
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 18;
+        ctx.stroke();
+
+        const pearlCount = 72;
+        for (let i = 0; i < pearlCount; i++) {
+          const a = (i / pearlCount) * Math.PI * 2;
+          const dotX = cx + Math.cos(a) * 372;
+          const dotY = cy + Math.sin(a) * 372;
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, 11, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 355, 0, Math.PI * 2);
+        const greenGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, 355);
+        greenGrad.addColorStop(0, '#10b981');
+        greenGrad.addColorStop(0.6, '#059669');
+        greenGrad.addColorStop(1, '#064e3b');
+        ctx.fillStyle = greenGrad;
+        ctx.fill();
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.shadowColor = 'rgba(0, 40, 20, 0.8)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
+
+        ctx.font = 'bold 110px "Cinzel", "Noto Serif Tamil", serif';
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText("HAPPY", cx, cy - 65);
+
+        ctx.font = 'bold 130px "Cinzel", "Noto Serif Tamil", serif';
+        ctx.fillText("DIWALI", cx, cy + 75);
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("HAPPY", cx, cy - 65);
+        ctx.fillText("DIWALI", cx, cy + 75);
+
+        ctx.restore();
+
+        addSandNoise(0.18);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.anisotropy = 16;
+        return tex;
+      }
+    };
+
+    // --- Core 3D Diwali Cinematic Experience ---
+    class DiwaliExperience {
+      constructor() {
+        this.canvas = document.getElementById('webgl-canvas');
+        this.clock = new THREE.Clock();
+
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.composer = null;
+        this.bloomPass = null;
+
+        this.lightPool = [];
+        this.maxPoolLights = 8;
+
+        this.courtyardGroup = new THREE.Group();
+        this.kolamParentGroup = new THREE.Group();
+        this.diyas = [];
+
+        this.screenObjects = new THREE.Group();
+        this.activeParticles = [];
+        this.activeSmokes = [];
+        this.activeRipples = [];
+        this.marigoldPetals = null;
+        this.walaTimer = null;
+        this.raycaster = new THREE.Raycaster();
+        this.mouseVec = new THREE.Vector2();
+        this.floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+        this.init();
+      }
+
+      init() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color('#020107');
+        this.scene.fog = new THREE.FogExp2(0x020107, 0.024);
+
+        this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 400);
+        this.camera.position.set(0, 16, 0.1);
+        this.camera.lookAt(0, 0, 0);
+
+        this.renderer = new THREE.WebGLRenderer({
+          canvas: this.canvas,
+          antialias: true,
+          powerPreference: "high-performance"
+        });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(STATE.pixelRatio);
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 0.85;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+
+        const renderScene = new THREE.RenderPass(this.scene, this.camera);
+        this.bloomPass = new THREE.UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          0.2,
+          0.2,
+          0.92
+        );
+        this.composer = new THREE.EffectComposer(this.renderer);
+        this.composer.addPass(renderScene);
+        this.composer.addPass(this.bloomPass);
+
+        this.scene.add(this.courtyardGroup);
+        this.scene.add(this.kolamParentGroup);
+        this.scene.add(this.screenObjects);
+
+        this.buildNightSky();
+        this.buildCourtyardArchitecture();
+        this.initLightingPool();
+        this.buildIntricateOrnateRangoli();
+
+        window.addEventListener('resize', () => this.onResize());
+      }
+
+      buildNightSky() {
+        const skyGroup = new THREE.Group();
+        const starCount = 2000;
+        const starGeom = new THREE.BufferGeometry();
+        const positions = new Float32Array(starCount * 3);
+        const colors = new Float32Array(starCount * 3);
+
+        for (let i = 0; i < starCount; i++) {
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(Math.random() * 0.95);
+          const r = 260 + Math.random() * 50;
+
+          positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i * 3 + 1] = r * Math.cos(phi) + 10;
+          positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+          const col = new THREE.Color().setHSL(0.6 + Math.random() * 0.1, 0.35, 0.8 + Math.random() * 0.2);
+          colors[i * 3] = col.r;
+          colors[i * 3 + 1] = col.g;
+          colors[i * 3 + 2] = col.b;
+        }
+
+        starGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        starGeom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const starMat = new THREE.PointsMaterial({
+          size: 1.6,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.85
+        });
+        skyGroup.add(new THREE.Points(starGeom, starMat));
+
+        const nebula = new THREE.Mesh(
+          new THREE.PlaneGeometry(360, 200),
+          new THREE.MeshBasicMaterial({ color: 0x1b1136, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+        );
+        nebula.position.set(0, 140, -120);
+        nebula.rotation.x = Math.PI * 0.35;
+        skyGroup.add(nebula);
+
+        this.scene.add(skyGroup);
+      }
+
+      buildCourtyardArchitecture() {
+        const floorNormal = CanvasTextures.createGraniteNormal();
+        const floorRoughness = CanvasTextures.createGraniteRoughness();
+
+        const floorGeom = new THREE.PlaneGeometry(55, 55, 32, 32);
+        const floorMat = new THREE.MeshStandardMaterial({
+          color: 0x18171f,
+          roughness: 0.22,
+          metalness: 0.15,
+          normalMap: floorNormal,
+          roughnessMap: floorRoughness,
+          normalScale: new THREE.Vector2(0.35, 0.35)
+        });
+        const floor = new THREE.Mesh(floorGeom, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        this.courtyardGroup.add(floor);
+
+        const pillarPositions = [
+          [-9, 0, -8], [9, 0, -8],
+          [-9, 0, 4], [9, 0, 4],
+          [-14, 0, -2], [14, 0, -2]
+        ];
+
+        const stoneMat = new THREE.MeshStandardMaterial({ color: 0x3d363a, roughness: 0.7, metalness: 0.05 });
+        const brassMat = new THREE.MeshStandardMaterial({ color: 0xd49b38, roughness: 0.35, metalness: 0.8 });
+
+        pillarPositions.forEach(pos => {
+          const pillar = new THREE.Group();
+          const base = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.7, 1.6), stoneMat);
+          base.position.y = 0.35;
+          pillar.add(base);
+
+          const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 7.5, 8), stoneMat);
+          shaft.position.y = 4.45;
+          pillar.add(shaft);
+
+          const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.06, 8, 24), brassMat);
+          ring1.rotation.x = Math.PI / 2;
+          ring1.position.y = 2.2;
+          pillar.add(ring1);
+
+          const ring2 = ring1.clone();
+          ring2.position.y = 6.2;
+          pillar.add(ring2);
+
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 0.65, 0.9, 8), stoneMat);
+          cap.position.y = 8.5;
+          pillar.add(cap);
+
+          pillar.position.set(pos[0], pos[1], pos[2]);
+          this.courtyardGroup.add(pillar);
+        });
+
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(32, 1.2, 1.6), stoneMat);
+        beam.position.set(0, 9.2, -8);
+        this.courtyardGroup.add(beam);
+
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(34, 11, 1.2), new THREE.MeshStandardMaterial({ color: 0x2b2428, roughness: 0.85 }));
+        wall.position.set(0, 5.5, -12);
+        this.courtyardGroup.add(wall);
+
+        const door = new THREE.Mesh(new THREE.BoxGeometry(4.2, 7.2, 0.3), new THREE.MeshStandardMaterial({ color: 0x4d260c, roughness: 0.5 }));
+        door.position.set(0, 3.6, -11.3);
+        this.courtyardGroup.add(door);
+
+        this.buildMarigoldToran();
+      }
+
+      buildMarigoldToran() {
+        const toranGroup = new THREE.Group();
+        const flowerTex = CanvasTextures.createMarigoldTexture();
+        const flowerMat = new THREE.SpriteMaterial({ map: flowerTex, transparent: true, opacity: 0.95 });
+
+        for (let span = -7; span <= 7; span += 7) {
+          const count = 24;
+          for (let i = 0; i <= count; i++) {
+            const t = i / count;
+            const x = (span - 3.5) + t * 7;
+            const y = 8.7 - Math.sin(t * Math.PI) * 1.35;
+            const z = -7.9;
+
+            const flower = new THREE.Sprite(flowerMat);
+            flower.scale.set(0.35, 0.35, 0.35);
+            flower.position.set(x, y, z);
+            toranGroup.add(flower);
+
+            if (i % 5 === 0) {
+              for (let k = 1; k <= 3; k++) {
+                const tassel = new THREE.Sprite(flowerMat);
+                tassel.scale.set(0.24, 0.24, 0.24);
+                tassel.position.set(x, y - k * 0.23, z);
+                toranGroup.add(tassel);
+              }
+            }
+          }
+        }
+        this.courtyardGroup.add(toranGroup);
+      }
+
+      initLightingPool() {
+        const ambientLight = new THREE.AmbientLight(0xfff1d6, 0.35);
+        this.scene.add(ambientLight);
+
+        const moonLight = new THREE.DirectionalLight(0xa5c2ff, 0.3);
+        moonLight.position.set(10, 30, 20);
+        this.scene.add(moonLight);
+
+        const courtyardLantern = new THREE.PointLight(0xff9933, 0.5, 18);
+        courtyardLantern.position.set(0, 4.5, -3);
+        this.scene.add(courtyardLantern);
+
+        for (let i = 0; i < this.maxPoolLights; i++) {
+          const pl = new THREE.PointLight(0xffaa33, 0, 12, 2.0);
+          pl.position.set(0, 0.5, 0);
+          this.scene.add(pl);
+          this.lightPool.push({ light: pl, inUse: false, baseIntensity: 0 });
+        }
+      }
+
+      acquireLight(colorHex = 0xffaa33, intensity = 2.0, distance = 16) {
+        const item = this.lightPool.find(l => !l.inUse) || this.lightPool[0];
+        item.inUse = true;
+        item.light.color.setHex(colorHex);
+        item.light.distance = distance;
+        item.baseIntensity = intensity;
+        item.light.intensity = intensity;
+        return item;
+      }
+
+      releaseLight(item) {
+        if (!item) return;
+        item.inUse = false;
+        item.light.intensity = 0;
+      }
+
+      buildIntricateOrnateRangoli() {
+        const kolamGroup = new THREE.Group();
+
+        const rangoliTexture = CanvasTextures.createPhotoRangoliTexture();
+        const rangoliPlaneGeom = new THREE.PlaneGeometry(10.8, 10.8, 32, 32);
+
+        const rangoliMat = new THREE.MeshStandardMaterial({
+          map: rangoliTexture,
+          bumpMap: rangoliTexture,
+          bumpScale: 0.08,
+          roughness: 0.8,
+          metalness: 0.05,
+          emissive: new THREE.Color(0x333333),
+          emissiveMap: rangoliTexture,
+          transparent: true,
+          alphaTest: 0.02
+        });
+
+        this.rangoliMesh = new THREE.Mesh(rangoliPlaneGeom, rangoliMat);
+        this.rangoliMesh.rotation.x = -Math.PI / 2;
+        this.rangoliMesh.position.y = 0.035;
+        this.rangoliMesh.scale.set(1, 1, 1);
+        kolamGroup.add(this.rangoliMesh);
+
+        this.createTerracottaDiyas(kolamGroup);
+        this.kolamParentGroup.add(kolamGroup);
+      }
+
+      createTerracottaDiyas(parentGroup) {
+        const diyaCount = 8;
+        const diyaRadius = 4.45;
+        const clayMat = new THREE.MeshStandardMaterial({ color: 0x9c3d1f, roughness: 0.8, metalness: 0.1 });
+        const oilMat = new THREE.MeshStandardMaterial({ color: 0x4a1204, roughness: 0.3 });
+        const flameTex = CanvasTextures.createSparkleTexture();
+
+        for (let i = 0; i < diyaCount; i++) {
+          const angle = (i / diyaCount) * Math.PI * 2;
+          const x = Math.cos(angle) * diyaRadius;
+          const z = Math.sin(angle) * diyaRadius;
+
+          const diyaGroup = new THREE.Group();
+          diyaGroup.position.set(x, 0.04, z);
+
+          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.18, 0.16, 16), clayMat);
+          bowl.position.y = 0.08;
+          diyaGroup.add(bowl);
+
+          const rim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 8, 20), clayMat);
+          rim.rotation.x = Math.PI / 2;
+          rim.position.y = 0.16;
+          diyaGroup.add(rim);
+
+          const oil = new THREE.Mesh(new THREE.CircleGeometry(0.24, 16), oilMat);
+          oil.rotation.x = -Math.PI / 2;
+          oil.position.y = 0.14;
+          diyaGroup.add(oil);
+
+          const flameMat = new THREE.SpriteMaterial({
+            map: flameTex,
+            color: 0xffaa33,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+          });
+          const flame = new THREE.Sprite(flameMat);
+          flame.scale.set(0.001, 0.001, 0.001);
+          flame.position.set(0, 0.38, 0);
+          diyaGroup.add(flame);
+
+          parentGroup.add(diyaGroup);
+
+          this.diyas.push({
+            group: diyaGroup,
+            flame: flame,
+            initialScale: 0.75,
+            flickerSpeed: 8 + Math.random() * 6,
+            lit: false
+          });
+        }
+      }
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const dt = this.clock.getDelta();
+        const elapsed = this.clock.getElapsedTime();
+
+        this.diyas.forEach(diya => {
+          if (diya.lit) {
+            const flicker = Math.sin(elapsed * diya.flickerSpeed) * 0.12 + Math.cos(elapsed * diya.flickerSpeed * 1.4) * 0.08;
+            const s = diya.initialScale + flicker;
+            diya.flame.scale.set(s, s * 1.5, s);
+          }
+        });
+
+        for (let i = this.activeParticles.length - 1; i >= 0; i--) {
+          const p = this.activeParticles[i];
+          p.age += dt;
+          p.vel.y -= 9.8 * dt * 0.5;
+          p.sprite.position.addScaledVector(p.vel, dt);
+          p.sprite.material.opacity = 1 - (p.age / p.maxLife);
+
+          if (p.sprite.position.y < 0.04) {
+            p.sprite.position.y = 0.04;
+            p.vel.y *= -0.4;
+          }
+
+          if (p.age >= p.maxLife) {
+            this.screenObjects.remove(p.sprite);
+            p.sprite.material.dispose();
+            this.activeParticles.splice(i, 1);
+          }
+        }
+
+        for (let i = this.activeSmokes.length - 1; i >= 0; i--) {
+          const sm = this.activeSmokes[i];
+          sm.age += dt;
+          sm.sprite.position.addScaledVector(sm.vel, dt);
+          const ratio = sm.age / sm.maxLife;
+          const curScale = 0.6 + ratio * sm.maxScale;
+          sm.sprite.scale.set(curScale, curScale, curScale);
+          sm.sprite.material.opacity = (1 - ratio) * 0.28;
+
+          if (sm.age >= sm.maxLife) {
+            this.screenObjects.remove(sm.sprite);
+            sm.sprite.material.dispose();
+            this.activeSmokes.splice(i, 1);
+          }
+        }
+
+        for (let i = this.activeRipples.length - 1; i >= 0; i--) {
+          const rip = this.activeRipples[i];
+          rip.age += dt;
+          if (rip.age >= rip.delay) {
+            const progress = (rip.age - rip.delay) / rip.maxLife;
+            const currentScale = 1 + progress * rip.maxScale;
+            rip.mesh.scale.set(currentScale, currentScale, 1);
+            rip.mat.opacity = Math.max(0, (1 - Math.pow(progress, 0.75)) * 0.85);
+
+            if (progress >= 1.0) {
+              this.scene.remove(rip.mesh);
+              rip.geom.dispose();
+              rip.mat.dispose();
+              this.activeRipples.splice(i, 1);
+            }
+          }
+        }
+
+        if (this.marigoldPetals) {
+          this.marigoldPetals.forEach(p => {
+            p.sprite.position.y -= p.fallSpeed;
+            p.sprite.position.x += Math.sin(elapsed * p.swaySpeed) * p.swayDist;
+            p.sprite.position.z += Math.cos(elapsed * p.swaySpeed) * p.swayDist * 0.5;
+
+            if (p.sprite.position.y < 0.1) {
+              p.sprite.position.y = 22 + Math.random() * 5;
+            }
+          });
+        }
+
+        try {
+          if (this.composer) {
+            this.composer.render();
+          } else {
+            this.renderer.render(this.scene, this.camera);
+          }
+        } catch (e) {
+          this.renderer.render(this.scene, this.camera);
+        }
+      }
+
+      shakeCamera(intensity = 0.35, duration = 0.5) {
+        const origX = this.camera.position.x;
+        const origY = this.camera.position.y;
+        const origZ = this.camera.position.z;
+
+        const tl = gsap.timeline({
+          onComplete: () => {
+            this.camera.position.set(origX, origY, origZ);
+          }
+        });
+
+        const steps = 10;
+        for (let i = 0; i < steps; i++) {
+          tl.to(this.camera.position, {
+            x: origX + (Math.random() - 0.5) * intensity,
+            y: origY + (Math.random() - 0.5) * intensity * 0.6,
+            z: origZ + (Math.random() - 0.5) * intensity,
+            duration: duration / steps,
+            ease: "power1.inOut"
+          });
+        }
+      }
+
+      spawnFloorTouchRipple(clientX, clientY) {
+        if (!this.camera || !this.scene) return;
+        this.mouseVec.x = (clientX / window.innerWidth) * 2 - 1;
+        this.mouseVec.y = -(clientY / window.innerHeight) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouseVec, this.camera);
+
+        const hit = new THREE.Vector3();
+        if (this.raycaster.ray.intersectPlane(this.floorPlane, hit)) {
+          const rippleRingCount = 2;
+          for (let i = 0; i < rippleRingCount; i++) {
+            const geom = new THREE.RingGeometry(0.12, 0.22, 32);
+            const mat = new THREE.MeshBasicMaterial({
+              color: 0xf59e0b,
+              transparent: true,
+              opacity: 0.8,
+              side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(geom, mat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(hit.x, 0.045 + i * 0.005, hit.z);
+            this.scene.add(ring);
+
+            this.activeRipples.push({
+              mesh: ring,
+              geom: geom,
+              mat: mat,
+              age: 0,
+              delay: i * 0.12,
+              maxLife: 1.1,
+              maxScale: 6.5
+            });
+          }
+
+          this.spawnSparkBurst(new THREE.Vector3(hit.x, 0.1, hit.z), 12, 0xfde047, 3.2);
+        }
+      }
+
+      spawnShockwaveRing(pos) {
+        const geom = new THREE.RingGeometry(0.4, 0.8, 48);
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0xffedd5,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.DoubleSide
+        });
+        const shockwave = new THREE.Mesh(geom, mat);
+        shockwave.rotation.x = -Math.PI / 2;
+        shockwave.position.set(pos.x, 0.06, pos.z);
+        this.screenObjects.add(shockwave);
+
+        gsap.to(shockwave.scale, {
+          x: 24,
+          y: 24,
+          z: 24,
+          duration: 0.85,
+          ease: "power2.out",
+          onComplete: () => {
+            this.screenObjects.remove(shockwave);
+            geom.dispose();
+            mat.dispose();
+          }
+        });
+
+        gsap.to(mat, {
+          opacity: 0,
+          duration: 0.85,
+          ease: "power2.out"
+        });
+      }
+
+      clearScreenObjects() {
+        if (this.walaTimer) {
+          clearInterval(this.walaTimer);
+          this.walaTimer = null;
+        }
+        if (this.finaleRocketTimer) {
+          clearInterval(this.finaleRocketTimer);
+          this.finaleRocketTimer = null;
+        }
+        if (this.rocketTimer) {
+          clearInterval(this.rocketTimer);
+          this.rocketTimer = null;
+        }
+        while (this.screenObjects.children.length > 0) {
+          const obj = this.screenObjects.children[0];
+          this.screenObjects.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+            else obj.material.dispose();
+          }
+        }
+        this.activeParticles = [];
+        this.activeSmokes = [];
+        this.activeRipples = [];
+      }
+
+      // SCREEN 1: கோலம்
+      startScreen1() {
+        this.clearScreenObjects();
+        this.kolamParentGroup.visible = true;
+
+        this.camera.position.set(0, 15, 0.1);
+        this.camera.lookAt(0, 0, 0);
+
+        gsap.to(this.camera.position, {
+          x: 0,
+          y: 8.8,
+          z: 7.2,
+          duration: 4.0,
+          ease: "power2.out",
+          onUpdate: () => this.camera.lookAt(0, 0, 0)
+        });
+
+        if (this.rangoliMesh) {
+          this.rangoliMesh.scale.set(0.001, 0.001, 0.001);
+          this.rangoliMesh.rotation.z = -Math.PI * 0.35;
+          gsap.to(this.rangoliMesh.scale, {
+            x: 1,
+            y: 1,
+            z: 1,
+            duration: 3.2,
+            ease: "power2.out"
+          });
+          gsap.to(this.rangoliMesh.rotation, {
+            z: 0,
+            duration: 3.5,
+            ease: "power2.out"
+          });
+        }
+
+        setTimeout(() => {
+          const diyaLight = this.acquireLight(0xff9922, 3.2, 16);
+          diyaLight.light.position.set(0, 0.8, 0);
+
+          this.diyas.forEach((diya, idx) => {
+            gsap.delayedCall(idx * 0.15, () => {
+              diya.lit = true;
+              audio.playDiyaIgnite(1.0 + idx * 0.04);
+              gsap.to(diya.flame.scale, {
+                x: diya.initialScale,
+                y: diya.initialScale * 1.5,
+                z: diya.initialScale,
+                duration: 0.4,
+                ease: "back.out(2)"
+              });
+            });
+          });
+        }, 1800);
+      }
+
+      // SCREEN 2: 1000 வாலா
+      startScreen2() {
+        this.clearScreenObjects();
+        this.kolamParentGroup.visible = false;
+
+        this.camera.position.set(0, 7.5, 9.2);
+        this.camera.lookAt(0, 0.2, 0);
+
+        gsap.to(this.camera.position, {
+          x: 2.8,
+          y: 4.2,
+          z: 6.8,
+          duration: 3.5,
+          ease: "power2.out",
+          onUpdate: () => this.camera.lookAt(0, 0.2, 0)
+        });
+
+        const crackerCount = 180;
+        const crackers = [];
+        const garlandGroup = new THREE.Group();
+        const redMat = new THREE.MeshStandardMaterial({ color: 0xd61818, roughness: 0.45, metalness: 0.1 });
+        const goldBandMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.3 });
+
+        for (let i = 0; i < crackerCount; i++) {
+          const t = i / crackerCount;
+          const theta = t * Math.PI * 9.5;
+          const r = 0.25 + t * 4.4;
+          const x = Math.cos(theta) * r;
+          const z = Math.sin(theta) * r;
+
+          const unit = new THREE.Group();
+          unit.position.set(x, 0.08, z);
+
+          const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.34, 10), redMat);
+          cylinder.rotation.z = Math.PI / 2;
+          cylinder.rotation.y = theta + Math.PI / 2;
+          unit.add(cylinder);
+
+          const band = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.09, 10), goldBandMat);
+          band.rotation.z = Math.PI / 2;
+          band.rotation.y = theta + Math.PI / 2;
+          unit.add(band);
+
+          garlandGroup.add(unit);
+          crackers.push({ group: unit, pos: new THREE.Vector3(x, 0.12, z) });
+        }
+
+        this.screenObjects.add(garlandGroup);
+
+        const fuseSparkTex = CanvasTextures.createSparkleTexture();
+        const fuseSpark = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: fuseSparkTex,
+          color: 0xffee44,
+          transparent: true,
+          blending: THREE.AdditiveBlending
+        }));
+        fuseSpark.scale.set(0.6, 0.6, 0.6);
+        fuseSpark.position.copy(crackers[0].pos);
+        garlandGroup.add(fuseSpark);
+
+        const flashLight = this.acquireLight(0xffea55, 0, 20);
+        let cur = 0;
+
+        this.walaTimer = setInterval(() => {
+          if (cur >= crackers.length || STATE.currentScreen !== 2) {
+            clearInterval(this.walaTimer);
+            this.walaTimer = null;
+            this.releaseLight(flashLight);
+            if (fuseSpark) garlandGroup.remove(fuseSpark);
+            return;
+          }
+
+          const c = crackers[cur];
+          c.group.visible = false;
+          fuseSpark.position.copy(c.pos);
+
+          audio.playCrackerPop(1.25);
+
+          flashLight.light.position.set(c.pos.x, c.pos.y + 0.35, c.pos.z);
+          flashLight.light.intensity = 0.9;
+          flashLight.light.distance = 7;
+
+          this.spawnSparkBurst(c.pos, 22, cur % 2 === 0 ? 0xffcc22 : 0xff7711, 6.0);
+          this.spawnSmokePuff(c.pos, null, 3.8);
+
+          if (cur % 2 === 0) {
+            this.shakeCamera(0.05, 0.06);
+          }
+          cur++;
+        }, 34);
+      }
+
+      // SCREEN 3: ஆட்டோ பாம்
+      startScreen3() {
+        this.clearScreenObjects();
+        this.kolamParentGroup.visible = false;
+
+        this.camera.position.set(0, 5.5, 9.5);
+        this.camera.lookAt(0, 0.4, 0);
+
+        gsap.to(this.camera.position, {
+          x: 0,
+          y: 4.2,
+          z: 7.5,
+          duration: 3.0,
+          ease: "power2.out",
+          onUpdate: () => this.camera.lookAt(0, 0.4, 0)
+        });
+
+        const bombGroup = new THREE.Group();
+        bombGroup.position.set(0, 6.0, 0);
+
+        const greenMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, metalness: 0.1 });
+        const twineMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.85 });
+
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.85, 24), greenMat);
+        bombGroup.add(body);
+
+        for (let i = 0; i < 4; i++) {
+          const twine = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.035, 8, 24), twineMat);
+          twine.rotation.x = Math.PI / 2;
+          twine.position.y = -0.3 + i * 0.2;
+          bombGroup.add(twine);
+        }
+
+        const fuse = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.02, 0.02, 0.45, 8),
+          new THREE.MeshBasicMaterial({ color: 0x475569 })
+        );
+        fuse.position.set(0, 0.6, 0);
+        fuse.rotation.z = 0.2;
+        bombGroup.add(fuse);
+
+        const sparkTex = CanvasTextures.createSparkleTexture();
+        const spark = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: sparkTex,
+          color: 0xffea33,
+          transparent: true,
+          blending: THREE.AdditiveBlending
+        }));
+        spark.scale.set(0.5, 0.5, 0.5);
+        spark.position.set(0.08, 0.82, 0);
+        bombGroup.add(spark);
+
+        this.screenObjects.add(bombGroup);
+
+        gsap.to(bombGroup.position, {
+          y: 0.45,
+          duration: 0.75,
+          ease: "bounce.out",
+          onComplete: () => {
+            let sparkCount = 0;
+            const fuseInterval = setInterval(() => {
+              if (STATE.currentScreen !== 3) {
+                clearInterval(fuseInterval);
+                return;
+              }
+              sparkCount++;
+              spark.scale.set(0.3 + Math.random() * 0.35, 0.3 + Math.random() * 0.35, 1);
+              audio.playCrackerPop(0.35);
+
+              if (sparkCount > 24) {
+                clearInterval(fuseInterval);
+                this.detonateAutoBomb(bombGroup);
+              }
+            }, 65);
+          }
+        });
+      }
+
+      detonateAutoBomb(bombGroup) {
+        const pos = bombGroup.position.clone();
+        this.screenObjects.remove(bombGroup);
+
+        audio.playAutoBombBoom();
+        this.shakeCamera(0.65, 0.85);
+        this.spawnShockwaveRing(pos);
+
+        const bombLight = this.acquireLight(0xffeedd, 1.4, 25);
+        bombLight.light.position.set(pos.x, pos.y + 0.6, pos.z);
+
+        this.spawnSparkBurst(pos, 85, 0xffd700, 9.5);
+        this.spawnSparkBurst(pos, 45, 0xff4500, 7.0);
+
+        for (let i = 0; i < 12; i++) {
+          this.spawnSmokePuff(pos, new THREE.Vector3(
+            (Math.random() - 0.5) * 2.2,
+            0.6 + Math.random() * 1.6,
+            (Math.random() - 0.5) * 2.2
+          ), 5.5);
+        }
+
+        gsap.to(bombLight.light, {
+          intensity: 0,
+          duration: 0.7,
+          onComplete: () => this.releaseLight(bombLight)
+        });
+      }
+
+      // SCREEN 4: பெரு விழா
+      startScreen4() {
+        this.clearScreenObjects();
+        this.kolamParentGroup.visible = false;
+
+        gsap.to(this.camera.position, {
+          x: 0,
+          y: 6.2,
+          z: 13.5,
+          duration: 2.2,
+          ease: "power2.out",
+          onUpdate: () => this.camera.lookAt(0, 2.5, 0)
+        });
+
+        this.createPooThotti(new THREE.Vector3(-4.5, 0, -1));
+        this.createPooThotti(new THREE.Vector3(4.5, 0, -1));
+        this.createChakkaram(new THREE.Vector3(0, 0.05, 1.2));
+        this.createMathappu(new THREE.Vector3(-2, 2.8, 3));
+        this.createMathappu(new THREE.Vector3(2, 2.8, 3));
+
+        this.rocketTimer = setInterval(() => {
+          if (STATE.currentScreen !== 4) {
+            clearInterval(this.rocketTimer);
+            return;
+          }
+          this.launchRocket();
+        }, 1700);
+        this.launchRocket();
+      }
+
+      createPooThotti(pos) {
+        const pot = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.12, 0.55, 0.9, 16),
+          new THREE.MeshStandardMaterial({ color: 0x933b19, roughness: 0.7 })
+        );
+        pot.position.set(pos.x, pos.y + 0.45, pos.z);
+        this.screenObjects.add(pot);
+
+        const potLight = this.acquireLight(0xffb733, 3.2, 16);
+        potLight.light.position.set(pos.x, pos.y + 1.2, pos.z);
+        audio.playFountainHiss(6.0);
+
+        const interval = setInterval(() => {
+          if (STATE.currentScreen !== 4) {
+            clearInterval(interval);
+            this.releaseLight(potLight);
+            return;
+          }
+          for (let i = 0; i < 9; i++) {
+            const vel = new THREE.Vector3(
+              (Math.random() - 0.5) * 1.8,
+              6.5 + Math.random() * 4.5,
+              (Math.random() - 0.5) * 1.8
+            );
+            this.spawnSparkParticle(new THREE.Vector3(pos.x, pos.y + 0.9, pos.z), vel, 0xffeb88, 1.4);
+          }
+        }, 40);
+      }
+
+      createChakkaram(pos) {
+        const wheel = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.45, 0.45, 0.08, 20),
+          new THREE.MeshStandardMaterial({ color: 0xb91c1c })
+        );
+        wheel.position.copy(pos);
+        this.screenObjects.add(wheel);
+
+        const spinLight = this.acquireLight(0xff5500, 2.6, 12);
+        spinLight.light.position.set(pos.x, pos.y + 0.2, pos.z);
+        audio.playChakkaramWhine(6.0);
+
+        let angle = 0;
+        const interval = setInterval(() => {
+          if (STATE.currentScreen !== 4) {
+            clearInterval(interval);
+            this.releaseLight(spinLight);
+            return;
+          }
+          angle += 0.45;
+          wheel.rotation.y = angle;
+
+          for (let k = 0; k < 2; k++) {
+            const fireAngle = angle + k * Math.PI;
+            const dirX = Math.cos(fireAngle);
+            const dirZ = Math.sin(fireAngle);
+            const vel = new THREE.Vector3(dirX * 5.2, 0.4 + Math.random() * 0.4, dirZ * 5.2);
+            this.spawnSparkParticle(
+              new THREE.Vector3(pos.x + dirX * 0.4, pos.y + 0.1, pos.z + dirZ * 0.4),
+              vel,
+              0xff4400,
+              0.8
+            );
+          }
+        }, 30);
+      }
+
+      createMathappu(pos) {
+        const wire = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.015, 0.015, 1.2),
+          new THREE.MeshBasicMaterial({ color: 0x999999 })
+        );
+        wire.position.copy(pos);
+        this.screenObjects.add(wire);
+
+        const interval = setInterval(() => {
+          if (STATE.currentScreen !== 4) {
+            clearInterval(interval);
+            return;
+          }
+          for (let i = 0; i < 4; i++) {
+            const vel = new THREE.Vector3(
+              (Math.random() - 0.5) * 1.5,
+              (Math.random() - 0.5) * 1.5,
+              (Math.random() - 0.5) * 1.5
+            );
+            this.spawnSparkParticle(new THREE.Vector3(pos.x, pos.y + 0.4, pos.z), vel, 0xffffff, 0.7);
+          }
+        }, 50);
+      }
+
+      launchRocket() {
+        audio.playRocketFlight();
+        const startX = (Math.random() - 0.5) * 8;
+        const startZ = -3 - Math.random() * 4;
+        const peakY = 10 + Math.random() * 4;
+
+        const rocketHead = new THREE.Vector3(startX, 0.5, startZ);
+        const trailLight = this.acquireLight(0xffaa22, 1.5, 10);
+
+        gsap.to(rocketHead, {
+          y: peakY,
+          duration: 0.85,
+          ease: "power2.in",
+          onUpdate: () => {
+            trailLight.light.position.copy(rocketHead);
+            this.spawnSparkParticle(
+              rocketHead.clone(),
+              new THREE.Vector3((Math.random() - 0.5) * 0.5, -2, (Math.random() - 0.5) * 0.5),
+              0xff9900,
+              0.4
+            );
+          },
+          onComplete: () => {
+            this.releaseLight(trailLight);
+            const burstColors = [0xff2255, 0x00e5ff, 0xffe600, 0x76ff03, 0xff00ea];
+            const chosenColor = burstColors[Math.floor(Math.random() * burstColors.length)];
+            this.spawnSkyBurst(rocketHead, chosenColor);
+            this.shakeCamera(0.2, 0.3);
+          }
+        });
+      }
+
+      spawnSkyBurst(pos, colorHex) {
+        const particleCount = 110;
+        const geom = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = [];
+
+        for (let i = 0; i < particleCount; i++) {
+          positions[i * 3] = pos.x;
+          positions[i * 3 + 1] = pos.y;
+          positions[i * 3 + 2] = pos.z;
+
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(Math.random() * 2 - 1);
+          const speed = 2.8 + Math.random() * 4.2;
+
+          velocities.push(new THREE.Vector3(
+            speed * Math.sin(phi) * Math.cos(theta),
+            speed * Math.cos(phi),
+            speed * Math.sin(phi) * Math.sin(theta)
+          ));
+        }
+
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({
+          size: 0.42,
+          color: colorHex,
+          transparent: true,
+          blending: THREE.AdditiveBlending
+        });
+
+        const points = new THREE.Points(geom, mat);
+        this.screenObjects.add(points);
+
+        const burstLight = this.acquireLight(colorHex, 1.4, 20);
+        burstLight.light.position.copy(pos);
+
+        let age = 0;
+        const dur = 1.6;
+
+        const updateBurst = () => {
+          age += 0.022;
+          const posArr = points.geometry.attributes.position.array;
+
+          for (let i = 0; i < particleCount; i++) {
+            velocities[i].y -= 0.08;
+            velocities[i].multiplyScalar(0.97);
+            posArr[i * 3] += velocities[i].x * 0.022;
+            posArr[i * 3 + 1] += velocities[i].y * 0.022;
+            posArr[i * 3 + 2] += velocities[i].z * 0.022;
+          }
+          points.geometry.attributes.position.needsUpdate = true;
+          mat.opacity = 1 - (age / dur);
+          burstLight.light.intensity = 1.4 * (1 - age / dur);
+
+          if (age < dur) {
+            requestAnimationFrame(updateBurst);
+          } else {
+            this.releaseLight(burstLight);
+            this.screenObjects.remove(points);
+            geom.dispose();
+            mat.dispose();
+          }
+        };
+        updateBurst();
+      }
+
+      // SCREEN 5: ஒளி பிறக்கட்டும்
+      startScreen5() {
+        this.clearScreenObjects();
+        this.kolamParentGroup.visible = true;
+
+        gsap.to(this.camera.position, {
+          x: 0,
+          y: 11.5,
+          z: 24,
+          duration: 3.2,
+          ease: "power2.inOut",
+          onUpdate: () => this.camera.lookAt(0, 8.5, 0)
+        });
+
+        const frameBox = document.getElementById('festive-frame-container');
+        if (frameBox) {
+          frameBox.classList.add('frame-visible');
+        }
+
+        const reelVideo = document.getElementById('reel-video');
+        if (reelVideo) {
+          reelVideo.currentTime = 0;
+          reelVideo.play().catch(() => {
+            reelVideo.muted = true;
+            reelVideo.play().then(() => {
+              reelVideo.muted = false;
+            }).catch(() => {});
+          });
+        }
+
+        this.buildFallingMarigoldPetals();
+
+        this.finaleRocketTimer = setInterval(() => {
+          if (STATE.currentScreen !== 5) {
+            clearInterval(this.finaleRocketTimer);
+            return;
+          }
+          this.launchFinaleOverheadRocket();
+        }, 1100);
+        this.launchFinaleOverheadRocket();
+
+        setTimeout(() => {
+          audio.playNadaswaramFlourish();
+        }, 1100);
+      }
+
+      launchFinaleOverheadRocket() {
+        audio.playRocketFlight();
+        const startX = (Math.random() - 0.5) * 16;
+        const startZ = -4 - Math.random() * 4;
+        const peakY = 16 + Math.random() * 6;
+
+        const rocketHead = new THREE.Vector3(startX, 6, startZ);
+        const trailLight = this.acquireLight(0xffaa22, 1.2, 12);
+
+        gsap.to(rocketHead, {
+          y: peakY,
+          duration: 0.8,
+          ease: "power2.in",
+          onUpdate: () => {
+            trailLight.light.position.copy(rocketHead);
+            this.spawnSparkParticle(
+              rocketHead.clone(),
+              new THREE.Vector3((Math.random() - 0.5) * 0.4, -2, (Math.random() - 0.5) * 0.4),
+              0xffcc00,
+              0.35
+            );
+          },
+          onComplete: () => {
+            this.releaseLight(trailLight);
+            const burstColors = [0xff1744, 0x00e5ff, 0xffea00, 0x76ff03, 0xff00e6, 0xff9100];
+            const chosenColor = burstColors[Math.floor(Math.random() * burstColors.length)];
+            this.spawnSkyBurst(rocketHead, chosenColor);
+          }
+        });
+      }
+
+      buildFallingMarigoldPetals() {
+        const petalGroup = new THREE.Group();
+        const flowerTex = CanvasTextures.createMarigoldTexture();
+        const petalCount = 45;
+        const petals = [];
+
+        for (let i = 0; i < petalCount; i++) {
+          const mat = new THREE.SpriteMaterial({ map: flowerTex, transparent: true, opacity: 0.85 });
+          const sprite = new THREE.Sprite(mat);
+          const sc = 0.28 + Math.random() * 0.22;
+          sprite.scale.set(sc, sc, sc);
+          sprite.position.set((Math.random() - 0.5) * 24, 12 + Math.random() * 15, (Math.random() - 0.5) * 15);
+          petalGroup.add(sprite);
+
+          petals.push({
+            sprite: sprite,
+            fallSpeed: 0.025 + Math.random() * 0.035,
+            swaySpeed: 1.2 + Math.random() * 2,
+            swayDist: 0.02 + Math.random() * 0.03
+          });
+        }
+        this.screenObjects.add(petalGroup);
+        this.marigoldPetals = petals;
+      }
+
+      spawnSparkBurst(origin, count = 25, colorHex = 0xffcc33, speed = 5.0) {
+        for (let i = 0; i < count; i++) {
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI;
+          const s = Math.random() * speed;
+          const vel = new THREE.Vector3(
+            s * Math.sin(phi) * Math.cos(theta),
+            s * Math.cos(phi) + 1.2,
+            s * Math.sin(phi) * Math.sin(theta)
+          );
+          this.spawnSparkParticle(origin.clone(), vel, colorHex, 0.6 + Math.random() * 0.4);
+        }
+      }
+
+      spawnSparkParticle(pos, vel, colorHex = 0xffbb22, life = 0.8) {
+        const tex = CanvasTextures.createSparkleTexture();
+        const mat = new THREE.SpriteMaterial({
+          map: tex,
+          color: colorHex,
+          transparent: true,
+          blending: THREE.AdditiveBlending
+        });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(0.35, 0.35, 0.35);
+        sprite.position.copy(pos);
+        this.screenObjects.add(sprite);
+
+        this.activeParticles.push({ sprite: sprite, vel: vel, age: 0, maxLife: life });
+      }
+
+      spawnSmokePuff(pos, baseVel = null, maxScale = 4.0) {
+        const tex = CanvasTextures.createSmokeTexture();
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.35 });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(0.6, 0.6, 0.6);
+        sprite.position.copy(pos);
+        this.screenObjects.add(sprite);
+
+        const vel = baseVel ? baseVel.clone() : new THREE.Vector3(
+          (Math.random() - 0.5) * 0.6,
+          0.8 + Math.random() * 0.7,
+          (Math.random() - 0.5) * 0.6
+        );
+        this.activeSmokes.push({ sprite: sprite, vel: vel, age: 0, maxLife: 2.2, maxScale: maxScale });
+      }
+
+      onResize() {
+        STATE.width = window.innerWidth;
+        STATE.height = window.innerHeight;
+        this.camera.aspect = STATE.width / STATE.height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(STATE.width, STATE.height);
+        this.composer.setSize(STATE.width, STATE.height);
+      }
+    }
+
+    let app = null;
+
+    function transitionToScreen(screenNumber) {
+      if (STATE.isTransitioning) return;
+      STATE.isTransitioning = true;
+      STATE.currentScreen = screenNumber;
+
+      const finaleContainer = document.getElementById('finale-greeting-container');
+      const frameBox = document.getElementById('festive-frame-container');
+      const hintContainer = document.getElementById('tap-hint-container');
+      const hintText = document.getElementById('tap-hint-text');
+
+      if (hintContainer && hintText) {
+        if (screenNumber === 5) {
+          hintText.innerText = "மீண்டும் பார்க்க திரையைத் தொடவும் 🔄";
+        } else {
+          hintText.innerText = "தொடர திரையைத் தொடவும்";
+        }
+        gsap.fromTo(hintContainer, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.5 });
+      }
+
+      if (screenNumber === 5) {
+        gsap.to(finaleContainer, { opacity: 1, duration: 1.2, pointerEvents: 'auto' });
+        if (frameBox) frameBox.classList.add('frame-visible');
+      } else {
+        gsap.to(finaleContainer, { opacity: 0, duration: 0.2, pointerEvents: 'none' });
+        if (frameBox) frameBox.classList.remove('frame-visible');
+
+        const reelVideo = document.getElementById('reel-video');
+        if (reelVideo) reelVideo.pause();
+      }
+
+      switch (screenNumber) {
+        case 1:
+          app.startScreen1();
+          break;
+        case 2:
+          app.startScreen2();
+          break;
+        case 3:
+          app.startScreen3();
+          break;
+        case 4:
+          app.startScreen4();
+          break;
+        case 5:
+          app.startScreen5();
+          break;
+      }
+
+      setTimeout(() => {
+        STATE.isTransitioning = false;
+      }, 700);
+    }
+
+    function advanceScreen() {
+      if (!audio.initialized) {
+        audio.init();
+      }
+
+      if (STATE.currentScreen < STATE.totalScreens) {
+        transitionToScreen(STATE.currentScreen + 1);
+      } else {
+        transitionToScreen(1);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      app = new DiwaliExperience();
+      app.animate();
+
+      transitionToScreen(1);
+
+      window.addEventListener('pointerdown', (e) => {
+        if (STATE.currentScreen === 5 && (e.target.closest('#festive-frame-container') || e.target.closest('video'))) {
+          return;
+        }
+
+        app.spawnFloorTouchRipple(e.clientX, e.clientY);
+        advanceScreen();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
+          if (document.activeElement.tagName === 'INPUT') return;
+          app.spawnFloorTouchRipple(window.innerWidth / 2, window.innerHeight / 2);
+          advanceScreen();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
