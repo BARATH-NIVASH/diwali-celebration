@@ -2,7 +2,10 @@
 <html lang="ta">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#040208">
   <title>ஒளி பிறக்கட்டும் - Let the Light Be Born | Diwali 3D</title>
   <!-- Google Fonts: Noto Serif Tamil, Noto Sans Tamil & Cinzel Decorative -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +40,8 @@
       background: #040208;
       font-family: 'Noto Serif Tamil', 'Noto Sans Tamil', serif;
       color: #fce7b0;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
     }
     canvas#webgl-canvas {
       position: absolute;
@@ -1990,6 +1995,15 @@
       app.animate();
 
       transitionToScreen(1);
+
+      // Mobile Audio Context Unlocker (Required for Android/iOS Web Audio API)
+      const unlockAudio = () => {
+        if (!audio.initialized) audio.init();
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+      };
+      document.addEventListener('touchstart', unlockAudio, { passive: true });
+      document.addEventListener('click', unlockAudio, { passive: true });
 
       window.addEventListener('pointerdown', (e) => {
         if (STATE.currentScreen === 5 && (e.target.closest('#festive-frame-container') || e.target.closest('video'))) {
